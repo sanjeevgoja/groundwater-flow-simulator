@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alberta Groundwater Flow Simulator</title>
+<style>
+  :root[data-theme="default"] {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-wash:    rgba(42,120,214,0.10);
+    --card-active-bg: rgba(42,120,214,0.06);
+  }
+  :root[data-theme="earth"] {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #1baf7a;
+    --accent-wash:    rgba(27,175,122,0.10);
+    --card-active-bg: rgba(27,175,122,0.07);
+  }
+  :root[data-theme="slate"] {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #4a3aa7;
+    --accent-wash:    rgba(74,58,167,0.10);
+    --card-active-bg: rgba(74,58,167,0.06);
+  }
+
+  /* status palette, fixed across all themes */
+  :root {
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #d03b3b;
+    --success-text:    #006300;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  header.page-header {
+    margin-bottom: 28px;
+  }
+
+  header.page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  header.page-header p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+
+  section {
+    margin-bottom: 28px;
+  }
+
+  h2.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+  }
+
+  .site-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 780px) {
+    .site-grid { grid-template-columns: 1fr; }
+  }
+
+  .site-card {
+    text-align: left;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+
+  .site-card:hover {
+    border-color: var(--accent);
+  }
+
+  .site-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .site-card[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--card-active-bg);
+  }
+
+  .site-card .icon-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .site-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .badge.good     { color: var(--status-good);     background: rgba(12,163,12,0.10); }
+  .badge.warning  { color: #8a5c00;                  background: rgba(250,178,25,0.16); }
+  .badge.serious  { color: #9c3c1f;                  background: rgba(236,131,90,0.16); }
+  .badge.critical { color: var(--status-critical);  background: rgba(208,59,59,0.10); }
+
+  .site-card p {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .site-card .params {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .controls-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .slider-row .slider-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .slider-row .slider-value {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 88px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--gridline);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface-1);
+    box-shadow: 0 0 0 1px var(--accent);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface-1);
+    box-shadow: 0 0 0 1px var(--accent);
+    cursor: pointer;
+  }
+
+  .tick-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    padding: 0 1px;
+  }
+
+  .controls-card .panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .controls-card .panel-heading h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .controls-card .panel-heading .panel-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 24px;
+  }
+
+  @media (max-width: 780px) {
+    .param-grid { grid-template-columns: 1fr; }
+  }
+
+  .param-row .param-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .param-row .param-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .param-row .param-value {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+
+  .btn:hover { border-color: var(--accent); }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  .btn.btn-primary:hover { opacity: 0.92; }
+
+  .btn.btn-ghost {
+    background: transparent;
+  }
+
+  .btn.btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .history-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .history-card .panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .history-card .panel-heading h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .history-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 8px 0;
+  }
+
+  .history-table-wrap {
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  table.data-table td.actions-cell {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  table.data-table td.actions-cell .btn {
+    margin-left: 6px;
+  }
+
+  table.data-table td.risk-good     { color: var(--status-good);    font-weight: 600; }
+  table.data-table td.risk-warning  { color: #8a5c00;                font-weight: 600; }
+  table.data-table td.risk-critical { color: var(--status-critical); font-weight: 600; }
+
+  .chart-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .chart-card .chart-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chart-card .chart-heading h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .chart-card .chart-heading .chart-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+  }
+
+  .chart-legend .key {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chart-legend .swatch {
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  .chart-legend .swatch.dashed {
+    background: repeating-linear-gradient(to right, var(--status-critical) 0 4px, transparent 4px 7px);
+    height: 2px;
+  }
+
+  #chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--surface-1);
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    line-height: 1.4;
+    transform: translate(-50%, -110%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 80ms ease;
+    z-index: 5;
+  }
+
+  .chart-wrap {
+    position: relative;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 780px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .stat-tile .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-tile .value {
+    font-size: 22px;
+    font-weight: 600;
+    font-variant-numeric: proportional-nums;
+  }
+
+  .stat-tile .value.risk-good     { color: var(--status-good); }
+  .stat-tile .value.risk-warning  { color: #8a5c00; }
+  .stat-tile .value.risk-critical { color: var(--status-critical); }
+
+  .assumptions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 780px) {
+    .assumptions-grid { grid-template-columns: 1fr; }
+  }
+
+  .info-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .info-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .info-card p, .info-card li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0 0 6px;
+  }
+
+  .info-card ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  table.data-table caption {
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  table.data-table th, table.data-table td {
+    text-align: right;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--gridline);
+    font-variant-numeric: tabular-nums;
+  }
+
+  table.data-table th:first-child, table.data-table td:first-child {
+    text-align: left;
+  }
+
+  table.data-table thead th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  details.table-toggle {
+    margin-top: 12px;
+  }
+
+  details.table-toggle summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+
+  details.table-toggle .data-table-wrap {
+    margin-top: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  footer.page-footer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* hidden theme switcher: a near-invisible dot in the corner */
+  #theme-switch {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    opacity: 0.12;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  #theme-switch:hover,
+  #theme-switch:focus-visible {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+
+  #theme-switch:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-header">
+    <h1>Alberta Groundwater Flow Simulator</h1>
+    <p>Pick a site setting and a simulation window to see how the depth to the water table is expected to move, and whether that movement crosses a saturation threshold associated with slope or excavation instability.</p>
+  </header>
+
+  <section aria-labelledby="site-heading">
+    <h2 class="section-title" id="site-heading">Site type</h2>
+    <div class="site-grid" id="site-grid" role="group" aria-label="Select a site type"></div>
+  </section>
+
+  <section aria-labelledby="window-heading">
+    <h2 class="section-title" id="window-heading">Simulation window</h2>
+    <div class="controls-card">
+      <div class="slider-row">
+        <span class="slider-label">Duration</span>
+        <input type="range" id="window-slider" min="0" max="2" step="1" value="1" aria-valuetext="120 days">
+        <span class="slider-value" id="window-value">120 days</span>
+      </div>
+      <div class="tick-row">
+        <span>60 days</span>
+        <span>120 days</span>
+        <span>365 days</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="params-heading">
+    <h2 class="section-title" id="params-heading">Model parameters</h2>
+    <div class="controls-card">
+      <div class="panel-heading">
+        <h3>Adjustable inputs</h3>
+        <span class="panel-sub">Starting values come from the selected site; adjust any of them to explore a different scenario.</span>
+      </div>
+      <div class="param-grid" id="param-grid"></div>
+      <div class="panel-actions">
+        <button type="button" class="btn btn-ghost" id="reset-params-btn">Reset to site defaults</button>
+        <button type="button" class="btn btn-primary" id="save-run-btn">Save this run</button>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="chart-heading">
+    <h2 class="section-title" id="chart-heading">Water table depth over time</h2>
+    <div class="chart-card">
+      <div class="chart-heading">
+        <h3 id="chart-title">Irrigated farmland</h3>
+        <span class="chart-sub" id="chart-sub">Depth to water table below ground surface</span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart-svg" viewBox="0 0 800 340" role="img" aria-labelledby="chart-title chart-desc">
+          <desc id="chart-desc">Line chart of simulated water table depth in metres against elapsed days.</desc>
+        </svg>
+        <div class="tooltip" id="chart-tooltip"></div>
+      </div>
+      <div class="chart-legend">
+        <span class="key"><span class="swatch" id="legend-line-swatch"></span> Simulated depth</span>
+        <span class="key"><span class="swatch dashed"></span> Saturation risk threshold</span>
+      </div>
+      <details class="table-toggle">
+        <summary>View underlying data as a table</summary>
+        <div class="data-table-wrap">
+          <table class="data-table" id="data-table">
+            <caption>Daily simulated depth to water table, in metres below ground surface</caption>
+            <thead><tr><th>Day</th><th>Depth (m)</th><th>Status</th></tr></thead>
+            <tbody id="data-table-body"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="label">Depth at end of window</div>
+        <div class="value" id="stat-final">-</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">Shallowest depth reached</div>
+        <div class="value" id="stat-min">-</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">Days at or beyond threshold</div>
+        <div class="value" id="stat-days">-</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">Risk status</div>
+        <div class="value" id="stat-risk">-</div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="assumptions-heading">
+    <h2 class="section-title" id="assumptions-heading">Flow assumptions and risk basis</h2>
+    <div class="assumptions-grid" id="assumptions-grid"></div>
+  </section>
+
+  <section aria-labelledby="history-heading">
+    <h2 class="section-title" id="history-heading">Run history</h2>
+    <div class="history-card">
+      <div class="panel-heading">
+        <h3>Saved runs</h3>
+        <span class="panel-sub" id="history-count">0 runs saved in this browser</span>
+      </div>
+      <div id="history-empty" class="history-empty">No runs saved yet. Adjust parameters above and use "Save this run" to start a record.</div>
+      <div class="history-table-wrap" id="history-table-wrap" hidden>
+        <table class="data-table" id="history-table">
+          <caption>Simulation runs recorded in this browser's local storage</caption>
+          <thead>
+            <tr>
+              <th>Saved</th><th>Site</th><th>Window</th><th>h0</th><th>hEq</th><th>tau</th><th>amp</th><th>Sy</th><th>Threshold</th><th>Final depth</th><th>Min depth</th><th>Risk</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body"></tbody>
+        </table>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="btn btn-ghost" id="export-json-btn">Export JSON</button>
+        <button type="button" class="btn btn-ghost" id="export-csv-btn">Export CSV</button>
+        <button type="button" class="btn btn-ghost" id="clear-history-btn">Clear history</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Simplified analytical model for illustration only. Not a substitute for a site-specific hydrogeological assessment.
+  </footer>
+</div>
+
+<button id="theme-switch" aria-label="Cycle dashboard color theme" title=" "></button>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------
+   * Site definitions and flow model parameters
+   * depth(t) = hEq + (h0 - hEq) * exp(-t / tau) + amp * sin(2*pi*t/365 + phase) + noise
+   * depth is metres below ground surface (smaller = shallower = closer to the surface)
+   * risk triggers when depth <= threshold
+   * ------------------------------------------------------------- */
+  var SITES = [
+    {
+      id: "farmland",
+      name: "Irrigated farmland",
+      badge: "Moderate risk",
+      badgeClass: "warning",
+      seed: 11,
+      defaults: { h0: 3.5, hEq: 2.0, tau: 90, amp: 0.3, phase: 0.4, noise: 0.05, threshold: 1.2, sy: 0.15 },
+      summary: "Canal seepage and irrigation return flow raise the water table toward a new equilibrium over the growing season.",
+      assumptions: [
+        "Unconfined sandy loam aquifer with moderate specific yield.",
+        "Recharge is dominated by irrigation return flow rather than direct precipitation.",
+        "Response time constant of about 90 days reflects moderate storativity."
+      ],
+      riskNote: "When the water table rises within about 1.2 m of the surface, capillary rise concentrates salts in the root zone and saturates canal-bank soils, both of which are tracked as waterlogging and bank-stability risk in Alberta irrigation districts."
+    },
+    {
+      id: "floodplain",
+      name: "River floodplain",
+      badge: "High risk",
+      badgeClass: "critical",
+      seed: 27,
+      defaults: { h0: 2.2, hEq: 1.0, tau: 20, amp: 0.6, phase: 1.1, noise: 0.08, threshold: 0.8, sy: 0.25 },
+      summary: "High hydraulic connectivity to the river means the alluvial aquifer tracks river stage closely, with a fast spring freshet pulse.",
+      assumptions: [
+        "Alluvial gravels and sands give high transmissivity and a short lag to river-stage changes.",
+        "A spring freshet loading event is modelled as a seasonal recharge pulse.",
+        "Response time constant of about 20 days reflects strong river-aquifer connection."
+      ],
+      riskNote: "Near-surface saturation of floodplain silts builds pore pressure and reduces effective stress, which is the standard trigger for river-bank slope failure referenced in Alberta river valley slope stability guidance."
+    },
+    {
+      id: "urban",
+      name: "Urban excavation site",
+      badge: "Serious risk",
+      badgeClass: "serious",
+      seed: 42,
+      defaults: { h0: 4.0, hEq: 6.0, tau: 15, amp: 0.1, phase: 0.0, noise: 0.1, threshold: 5.0, sy: 0.10 },
+      summary: "Active dewatering pumps draw the local water table down below the excavation base, but pump interruptions let it rebound quickly.",
+      assumptions: [
+        "Active dewatering pumping forces the water table toward a deeper equilibrium.",
+        "Short response time constant reflects direct pumping control rather than natural recharge.",
+        "Excavation base sits at 5.0 m, so a shallower depth means water has reached working grade."
+      ],
+      riskNote: "If the water table rebounds above the 5.0 m excavation base, for example during a pump outage, seepage into the pit can destabilize shoring and trigger basal heave, so depth crossing the base elevation is tracked as the risk trigger."
+    }
+  ];
+
+  /* Adjustable model parameters. "sy" (specific yield) scales the response
+     time constant relative to the site's own default: a lower specific
+     yield means less pore volume must fill or drain per metre of head
+     change, so the same aquifer reaches equilibrium faster. */
+  var PARAM_SPECS = [
+    { key: "h0", label: "Initial depth to water table", unit: "m", min: 0.1, max: 10, step: 0.1 },
+    { key: "hEq", label: "Equilibrium depth", unit: "m", min: 0.1, max: 10, step: 0.1 },
+    { key: "tau", label: "Aquifer response time", unit: "days", min: 5, max: 200, step: 1 },
+    { key: "amp", label: "Seasonal amplitude", unit: "m", min: 0, max: 2, step: 0.05 },
+    { key: "sy", label: "Specific yield", unit: "", min: 0.01, max: 0.35, step: 0.01 },
+    { key: "threshold", label: "Saturation risk threshold", unit: "m", min: 0.1, max: 10, step: 0.1 }
+  ];
+
+  var WINDOW_STEPS = [60, 120, 365];
+  var HISTORY_KEY = "gwSimHistory";
+  var HISTORY_LIMIT = 50;
+
+  function cloneParams(defaults) {
+    return {
+      h0: defaults.h0, hEq: defaults.hEq, tau: defaults.tau,
+      amp: defaults.amp, phase: defaults.phase, noise: defaults.noise,
+      threshold: defaults.threshold, sy: defaults.sy
+    };
+  }
+
+  var state = {
+    siteId: "farmland",
+    windowIndex: 1,
+    params: cloneParams(findSiteDefaults("farmland"))
+  };
+
+  function findSiteDefaults(id) {
+    var found = null;
+    SITES.forEach(function (site) { if (site.id === id) found = site.defaults; });
+    return found;
+  }
+
+  /* seeded PRNG so a given site/window always draws the same curve */
+  function mulberry32(seed) {
+    var a = seed;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function simulate(site, params, days) {
+    var rand = mulberry32(site.seed * 1000 + days);
+    var syRatio = params.sy / site.defaults.sy;
+    var effectiveTau = params.tau * syRatio;
+    var points = [];
+    for (var d = 0; d <= days; d++) {
+      var trend = params.hEq + (params.h0 - params.hEq) * Math.exp(-d / effectiveTau);
+      var seasonal = params.amp * Math.sin((2 * Math.PI * d) / 365 + params.phase);
+      var jitter = (rand() - 0.5) * 2 * params.noise;
+      var depth = Math.max(0.05, trend + seasonal + jitter);
+      points.push({ day: d, depth: depth });
+    }
+    return points;
+  }
+
+  function findSite(id) {
+    var s = null;
+    SITES.forEach(function (site) { if (site.id === id) s = site; });
+    return s;
+  }
+
+  /* ---------------------------------------------------------------
+   * Site cards
+   * ------------------------------------------------------------- */
+  var siteGrid = document.getElementById("site-grid");
+
+  function renderSiteCards() {
+    siteGrid.innerHTML = "";
+    SITES.forEach(function (site) {
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "site-card";
+      card.setAttribute("aria-pressed", site.id === state.siteId ? "true" : "false");
+      card.innerHTML =
+        '<div class="icon-row"><h3>' + site.name + '</h3>' +
+        '<span class="badge ' + site.badgeClass + '">' + site.badge + '</span></div>' +
+        '<p>' + site.summary + '</p>' +
+        '<div class="params">' +
+        '<span>Threshold ' + site.defaults.threshold.toFixed(1) + ' m</span>' +
+        '<span>Response ' + site.defaults.tau + ' d</span>' +
+        '</div>';
+      card.addEventListener("click", function () {
+        state.siteId = site.id;
+        state.params = cloneParams(site.defaults);
+        renderSiteCards();
+        renderParamControls();
+        renderAll();
+      });
+      siteGrid.appendChild(card);
+    });
+  }
+
+  /* ---------------------------------------------------------------
+   * Window slider
+   * ------------------------------------------------------------- */
+  var slider = document.getElementById("window-slider");
+  var windowValueEl = document.getElementById("window-value");
+
+  slider.addEventListener("input", function () {
+    state.windowIndex = Number(slider.value);
+    var days = WINDOW_STEPS[state.windowIndex];
+    windowValueEl.textContent = days + " days";
+    slider.setAttribute("aria-valuetext", days + " days");
+    renderAll();
+  });
+
+  /* ---------------------------------------------------------------
+   * Chart
+   * ------------------------------------------------------------- */
+  var svg = document.getElementById("chart-svg");
+  var tooltip = document.getElementById("chart-tooltip");
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  var PAD = { top: 16, right: 24, bottom: 30, left: 46 };
+  var W = 800, H = 340;
+  var plotW = W - PAD.left - PAD.right;
+  var plotH = H - PAD.top - PAD.bottom;
+
+  function niceMax(v) {
+    if (v <= 2) return 2;
+    if (v <= 4) return 4;
+    if (v <= 6) return 6;
+    if (v <= 8) return 8;
+    return Math.ceil(v / 2) * 2;
+  }
+
+  function renderChart() {
+    var site = findSite(state.siteId);
+    var days = WINDOW_STEPS[state.windowIndex];
+    var points = simulate(site, state.params, days);
+
+    var maxDepth = niceMax(Math.max.apply(null, points.map(function (p) { return p.depth; })) + 0.5);
+    var minDepth = 0;
+
+    function xScale(day) { return PAD.left + (day / days) * plotW; }
+    function yScale(depth) { return PAD.top + ((depth - minDepth) / (maxDepth - minDepth)) * plotH; }
+
+    var accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    var descEl = document.createElementNS(SVG_NS, "desc");
+    descEl.textContent = "Line chart of simulated water table depth in metres against elapsed days for " + site.name + ".";
+    svg.appendChild(descEl);
+
+    /* gridlines + y ticks */
+    var tickCount = 4;
+    for (var i = 0; i <= tickCount; i++) {
+      var depthVal = (maxDepth / tickCount) * i;
+      var y = yScale(depthVal);
+      var grid = document.createElementNS(SVG_NS, "line");
+      grid.setAttribute("x1", PAD.left);
+      grid.setAttribute("x2", W - PAD.right);
+      grid.setAttribute("y1", y);
+      grid.setAttribute("y2", y);
+      grid.setAttribute("stroke", "var(--gridline)");
+      grid.setAttribute("stroke-width", "1");
+      svg.appendChild(grid);
+
+      var label = document.createElementNS(SVG_NS, "text");
+      label.setAttribute("x", PAD.left - 8);
+      label.setAttribute("y", y + 4);
+      label.setAttribute("text-anchor", "end");
+      label.setAttribute("font-size", "11");
+      label.setAttribute("fill", "var(--text-muted)");
+      label.textContent = depthVal.toFixed(1);
+      svg.appendChild(label);
+    }
+
+    /* x ticks */
+    var xTickCount = 5;
+    for (var j = 0; j <= xTickCount; j++) {
+      var dayVal = Math.round((days / xTickCount) * j);
+      var x = xScale(dayVal);
+      var xlabel = document.createElementNS(SVG_NS, "text");
+      xlabel.setAttribute("x", x);
+      xlabel.setAttribute("y", H - PAD.bottom + 18);
+      xlabel.setAttribute("text-anchor", j === xTickCount ? "end" : (j === 0 ? "start" : "middle"));
+      xlabel.setAttribute("font-size", "11");
+      xlabel.setAttribute("fill", "var(--text-muted)");
+      xlabel.textContent = dayVal + "d";
+      svg.appendChild(xlabel);
+    }
+
+    /* risk zone: shallower than threshold, i.e. from depth 0 to threshold */
+    var riskTopY = yScale(0);
+    var riskBottomY = yScale(state.params.threshold);
+    var riskRect = document.createElementNS(SVG_NS, "rect");
+    riskRect.setAttribute("x", PAD.left);
+    riskRect.setAttribute("y", riskTopY);
+    riskRect.setAttribute("width", plotW);
+    riskRect.setAttribute("height", Math.max(0, riskBottomY - riskTopY));
+    riskRect.setAttribute("fill", "var(--status-critical)");
+    riskRect.setAttribute("opacity", "0.07");
+    svg.appendChild(riskRect);
+
+    /* threshold dashed line */
+    var thresholdY = yScale(state.params.threshold);
+    var thresholdLine = document.createElementNS(SVG_NS, "line");
+    thresholdLine.setAttribute("x1", PAD.left);
+    thresholdLine.setAttribute("x2", W - PAD.right);
+    thresholdLine.setAttribute("y1", thresholdY);
+    thresholdLine.setAttribute("y2", thresholdY);
+    thresholdLine.setAttribute("stroke", "var(--status-critical)");
+    thresholdLine.setAttribute("stroke-width", "2");
+    thresholdLine.setAttribute("stroke-dasharray", "5 4");
+    svg.appendChild(thresholdLine);
+
+    var thresholdLabel = document.createElementNS(SVG_NS, "text");
+    thresholdLabel.setAttribute("x", W - PAD.right);
+    thresholdLabel.setAttribute("y", thresholdY - 6);
+    thresholdLabel.setAttribute("text-anchor", "end");
+    thresholdLabel.setAttribute("font-size", "11");
+    thresholdLabel.setAttribute("font-weight", "600");
+    thresholdLabel.setAttribute("fill", "var(--status-critical)");
+    thresholdLabel.textContent = "Saturation risk threshold, " + state.params.threshold.toFixed(1) + " m";
+    svg.appendChild(thresholdLabel);
+
+    /* area fill under the line, down to the bottom baseline */
+    var areaPath = "M " + xScale(0) + " " + yScale(points[0].depth);
+    points.forEach(function (p) { areaPath += " L " + xScale(p.day) + " " + yScale(p.depth); });
+    areaPath += " L " + xScale(points[points.length - 1].day) + " " + yScale(maxDepth);
+    areaPath += " L " + xScale(0) + " " + yScale(maxDepth) + " Z";
+    var area = document.createElementNS(SVG_NS, "path");
+    area.setAttribute("d", areaPath);
+    area.setAttribute("fill", accent);
+    area.setAttribute("opacity", "0.10");
+    svg.appendChild(area);
+
+    /* line */
+    var linePath = "M " + xScale(points[0].day) + " " + yScale(points[0].depth);
+    points.forEach(function (p) { linePath += " L " + xScale(p.day) + " " + yScale(p.depth); });
+    var line = document.createElementNS(SVG_NS, "path");
+    line.setAttribute("d", linePath);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", accent);
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("stroke-linejoin", "round");
+    line.setAttribute("stroke-linecap", "round");
+    svg.appendChild(line);
+
+    /* end marker + direct label */
+    var last = points[points.length - 1];
+    var endX = xScale(last.day), endY = yScale(last.depth);
+
+    var ring = document.createElementNS(SVG_NS, "circle");
+    ring.setAttribute("cx", endX);
+    ring.setAttribute("cy", endY);
+    ring.setAttribute("r", "6");
+    ring.setAttribute("fill", "var(--surface-1)");
+    svg.appendChild(ring);
+
+    var dot = document.createElementNS(SVG_NS, "circle");
+    dot.setAttribute("cx", endX);
+    dot.setAttribute("cy", endY);
+    dot.setAttribute("r", "4.5");
+    dot.setAttribute("fill", accent);
+    svg.appendChild(dot);
+
+    var endLabel = document.createElementNS(SVG_NS, "text");
+    endLabel.setAttribute("x", endX - 10);
+    endLabel.setAttribute("y", endY - 12 < PAD.top ? endY + 20 : endY - 12);
+    endLabel.setAttribute("text-anchor", "end");
+    endLabel.setAttribute("font-size", "12");
+    endLabel.setAttribute("font-weight", "600");
+    endLabel.setAttribute("fill", "var(--text-primary)");
+    endLabel.textContent = last.depth.toFixed(2) + " m";
+    svg.appendChild(endLabel);
+
+    /* hover layer: crosshair + tooltip */
+    var hoverLine = document.createElementNS(SVG_NS, "line");
+    hoverLine.setAttribute("y1", PAD.top);
+    hoverLine.setAttribute("y2", H - PAD.bottom);
+    hoverLine.setAttribute("stroke", "var(--baseline)");
+    hoverLine.setAttribute("stroke-width", "1");
+    hoverLine.setAttribute("opacity", "0");
+    svg.appendChild(hoverLine);
+
+    var hoverDot = document.createElementNS(SVG_NS, "circle");
+    hoverDot.setAttribute("r", "5");
+    hoverDot.setAttribute("fill", accent);
+    hoverDot.setAttribute("stroke", "var(--surface-1)");
+    hoverDot.setAttribute("stroke-width", "2");
+    hoverDot.setAttribute("opacity", "0");
+    svg.appendChild(hoverDot);
+
+    var overlay = document.createElementNS(SVG_NS, "rect");
+    overlay.setAttribute("x", PAD.left);
+    overlay.setAttribute("y", PAD.top);
+    overlay.setAttribute("width", plotW);
+    overlay.setAttribute("height", plotH);
+    overlay.setAttribute("fill", "transparent");
+    svg.appendChild(overlay);
+
+    function pointerToIndex(clientX) {
+      var rect = svg.getBoundingClientRect();
+      var scale = W / rect.width;
+      var localX = (clientX - rect.left) * scale;
+      var ratio = (localX - PAD.left) / plotW;
+      ratio = Math.min(1, Math.max(0, ratio));
+      return Math.round(ratio * days);
+    }
+
+    overlay.addEventListener("mousemove", function (evt) {
+      var idx = pointerToIndex(evt.clientX);
+      var p = points[idx];
+      if (!p) return;
+      var px = xScale(p.day), py = yScale(p.depth);
+      hoverLine.setAttribute("x1", px);
+      hoverLine.setAttribute("x2", px);
+      hoverLine.setAttribute("opacity", "1");
+      hoverDot.setAttribute("cx", px);
+      hoverDot.setAttribute("cy", py);
+      hoverDot.setAttribute("opacity", "1");
+
+      var rect = svg.getBoundingClientRect();
+      var scaleX = rect.width / W;
+      var tipX = rect.left + px * scaleX + window.scrollX;
+      var tipY = rect.top + py * (rect.height / H) + window.scrollY;
+      var status = p.depth <= state.params.threshold ? "At or beyond risk threshold" : "Below threshold";
+      tooltip.innerHTML = "Day " + p.day + "<br>" + p.depth.toFixed(2) + " m &middot; " + status;
+      tooltip.style.left = tipX + "px";
+      tooltip.style.top = tipY + "px";
+      tooltip.style.opacity = "1";
+    });
+
+    overlay.addEventListener("mouseleave", function () {
+      hoverLine.setAttribute("opacity", "0");
+      hoverDot.setAttribute("opacity", "0");
+      tooltip.style.opacity = "0";
+    });
+
+    document.getElementById("legend-line-swatch").style.background = accent;
+
+    return points;
+  }
+
+  /* ---------------------------------------------------------------
+   * Stats, table, assumptions
+   * ------------------------------------------------------------- */
+  function renderStats(params, points) {
+    var last = points[points.length - 1];
+    var minPoint = points.reduce(function (a, b) { return b.depth < a.depth ? b : a; });
+    var daysAtRisk = points.filter(function (p) { return p.depth <= params.threshold; }).length;
+
+    document.getElementById("stat-final").textContent = last.depth.toFixed(2) + " m";
+    document.getElementById("stat-min").textContent = minPoint.depth.toFixed(2) + " m (day " + minPoint.day + ")";
+    document.getElementById("stat-days").textContent = daysAtRisk + " of " + points.length;
+
+    var riskEl = document.getElementById("stat-risk");
+    riskEl.classList.remove("risk-good", "risk-warning", "risk-critical");
+    if (daysAtRisk === 0) {
+      riskEl.textContent = "Clear";
+      riskEl.classList.add("risk-good");
+    } else if (daysAtRisk < points.length * 0.25) {
+      riskEl.textContent = "Elevated";
+      riskEl.classList.add("risk-warning");
+    } else {
+      riskEl.textContent = "Breached";
+      riskEl.classList.add("risk-critical");
+    }
+  }
+
+  function renderTable(params, points) {
+    var body = document.getElementById("data-table-body");
+    body.innerHTML = "";
+    points.forEach(function (p) {
+      if (p.day % 1 !== 0) return;
+      var tr = document.createElement("tr");
+      var status = p.depth <= params.threshold ? "At risk" : "Normal";
+      tr.innerHTML = "<td>" + p.day + "</td><td>" + p.depth.toFixed(2) + "</td><td>" + status + "</td>";
+      body.appendChild(tr);
+    });
+  }
+
+  function renderAssumptions() {
+    var grid = document.getElementById("assumptions-grid");
+    grid.innerHTML = "";
+    SITES.forEach(function (site) {
+      var card = document.createElement("div");
+      card.className = "info-card";
+      var list = site.assumptions.map(function (a) { return "<li>" + a + "</li>"; }).join("");
+      card.innerHTML =
+        "<h3>" + site.name + "</h3>" +
+        "<ul>" + list + "</ul>" +
+        "<p>" + site.riskNote + "</p>";
+      grid.appendChild(card);
+    });
+  }
+
+  function renderAll() {
+    var site = findSite(state.siteId);
+    document.getElementById("chart-title").textContent = site.name;
+    var points = renderChart();
+    renderStats(state.params, points);
+    renderTable(state.params, points);
+  }
+
+  /* ---------------------------------------------------------------
+   * Model parameter controls
+   * ------------------------------------------------------------- */
+  var paramGrid = document.getElementById("param-grid");
+
+  function renderParamControls() {
+    paramGrid.innerHTML = "";
+    PARAM_SPECS.forEach(function (spec) {
+      var row = document.createElement("div");
+      row.className = "param-row";
+      var displayValue = state.params[spec.key].toFixed(spec.step < 1 ? 2 : 0);
+      row.innerHTML =
+        '<div class="param-label-row">' +
+        '<span class="param-label">' + spec.label + '</span>' +
+        '<span class="param-value" id="param-value-' + spec.key + '">' + displayValue + (spec.unit ? " " + spec.unit : "") + '</span>' +
+        '</div>' +
+        '<input type="range" id="param-input-' + spec.key + '" min="' + spec.min + '" max="' + spec.max + '" step="' + spec.step + '" value="' + state.params[spec.key] + '">';
+      paramGrid.appendChild(row);
+
+      var input = row.querySelector("input");
+      input.addEventListener("input", function () {
+        var val = Number(input.value);
+        state.params[spec.key] = val;
+        document.getElementById("param-value-" + spec.key).textContent =
+          val.toFixed(spec.step < 1 ? 2 : 0) + (spec.unit ? " " + spec.unit : "");
+        renderAll();
+      });
+    });
+  }
+
+  document.getElementById("reset-params-btn").addEventListener("click", function () {
+    var site = findSite(state.siteId);
+    state.params = cloneParams(site.defaults);
+    renderParamControls();
+    renderAll();
+  });
+
+  /* ---------------------------------------------------------------
+   * Run history, recorded to this browser's localStorage
+   * ------------------------------------------------------------- */
+  function loadHistory() {
+    try {
+      var raw = window.localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(list) {
+    try {
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+      /* storage unavailable or full; history simply won't persist */
+    }
+  }
+
+  var history = loadHistory();
+
+  function computeSummary(params, points) {
+    var last = points[points.length - 1];
+    var minPoint = points.reduce(function (a, b) { return b.depth < a.depth ? b : a; });
+    var daysAtRisk = points.filter(function (p) { return p.depth <= params.threshold; }).length;
+    var status = daysAtRisk === 0 ? "Clear" : (daysAtRisk < points.length * 0.25 ? "Elevated" : "Breached");
+    return { finalDepth: last.depth, minDepth: minPoint.depth, daysAtRisk: daysAtRisk, totalDays: points.length, status: status };
+  }
+
+  function renderHistory() {
+    var body = document.getElementById("history-table-body");
+    var wrap = document.getElementById("history-table-wrap");
+    var empty = document.getElementById("history-empty");
+    var count = document.getElementById("history-count");
+
+    count.textContent = history.length + (history.length === 1 ? " run saved in this browser" : " runs saved in this browser");
+
+    if (history.length === 0) {
+      wrap.hidden = true;
+      empty.hidden = false;
+      return;
+    }
+    wrap.hidden = false;
+    empty.hidden = true;
+
+    body.innerHTML = "";
+    history.slice().reverse().forEach(function (entry) {
+      var tr = document.createElement("tr");
+      var riskClass = entry.summary.status === "Clear" ? "risk-good" : (entry.summary.status === "Elevated" ? "risk-warning" : "risk-critical");
+      tr.innerHTML =
+        "<td>" + entry.savedAt + "</td>" +
+        "<td>" + entry.siteName + "</td>" +
+        "<td>" + entry.windowDays + "d</td>" +
+        "<td>" + entry.params.h0.toFixed(2) + "</td>" +
+        "<td>" + entry.params.hEq.toFixed(2) + "</td>" +
+        "<td>" + entry.params.tau.toFixed(0) + "</td>" +
+        "<td>" + entry.params.amp.toFixed(2) + "</td>" +
+        "<td>" + entry.params.sy.toFixed(2) + "</td>" +
+        "<td>" + entry.params.threshold.toFixed(2) + "</td>" +
+        "<td>" + entry.summary.finalDepth.toFixed(2) + "</td>" +
+        "<td>" + entry.summary.minDepth.toFixed(2) + "</td>" +
+        '<td class="' + riskClass + '">' + entry.summary.status + "</td>" +
+        '<td class="actions-cell"></td>';
+      var actionsCell = tr.querySelector(".actions-cell");
+
+      var loadBtn = document.createElement("button");
+      loadBtn.type = "button";
+      loadBtn.className = "btn btn-small btn-ghost";
+      loadBtn.textContent = "Load";
+      loadBtn.addEventListener("click", function () { loadRun(entry); });
+      actionsCell.appendChild(loadBtn);
+
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "btn btn-small btn-ghost";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", function () {
+        history = history.filter(function (h) { return h.id !== entry.id; });
+        saveHistory(history);
+        renderHistory();
+      });
+      actionsCell.appendChild(delBtn);
+
+      body.appendChild(tr);
+    });
+  }
+
+  function loadRun(entry) {
+    var windowIdx = WINDOW_STEPS.indexOf(entry.windowDays);
+    state.siteId = entry.siteId;
+    state.windowIndex = windowIdx === -1 ? state.windowIndex : windowIdx;
+    state.params = cloneParams(entry.params);
+    slider.value = String(state.windowIndex);
+    var days = WINDOW_STEPS[state.windowIndex];
+    windowValueEl.textContent = days + " days";
+    slider.setAttribute("aria-valuetext", days + " days");
+    renderSiteCards();
+    renderParamControls();
+    renderAll();
+  }
+
+  document.getElementById("save-run-btn").addEventListener("click", function () {
+    var site = findSite(state.siteId);
+    var days = WINDOW_STEPS[state.windowIndex];
+    var points = simulate(site, state.params, days);
+    var now = new Date();
+    var entry = {
+      id: site.id + "-" + now.getTime(),
+      savedAt: now.toISOString().slice(0, 16).replace("T", " "),
+      siteId: site.id,
+      siteName: site.name,
+      windowDays: days,
+      params: cloneParams(state.params),
+      summary: computeSummary(state.params, points)
+    };
+    history.push(entry);
+    if (history.length > HISTORY_LIMIT) history = history.slice(history.length - HISTORY_LIMIT);
+    saveHistory(history);
+    renderHistory();
+  });
+
+  document.getElementById("clear-history-btn").addEventListener("click", function () {
+    history = [];
+    saveHistory(history);
+    renderHistory();
+  });
+
+  function downloadBlob(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById("export-json-btn").addEventListener("click", function () {
+    downloadBlob(JSON.stringify(history, null, 2), "groundwater-sim-history.json", "application/json");
+  });
+
+  document.getElementById("export-csv-btn").addEventListener("click", function () {
+    var headers = ["savedAt", "site", "windowDays", "h0", "hEq", "tau", "amp", "sy", "threshold", "finalDepth", "minDepth", "daysAtRisk", "totalDays", "status"];
+    var rows = [headers.join(",")];
+    history.forEach(function (e) {
+      rows.push([
+        e.savedAt, e.siteName, e.windowDays,
+        e.params.h0, e.params.hEq, e.params.tau, e.params.amp, e.params.sy, e.params.threshold,
+        e.summary.finalDepth.toFixed(2), e.summary.minDepth.toFixed(2), e.summary.daysAtRisk, e.summary.totalDays, e.summary.status
+      ].join(","));
+    });
+    downloadBlob(rows.join("\n"), "groundwater-sim-history.csv", "text/csv");
+  });
+
+  /* ---------------------------------------------------------------
+   * Hidden theme switcher
+   * ------------------------------------------------------------- */
+  var THEMES = ["default", "earth", "slate"];
+  var themeIndex = 0;
+  var themeBtn = document.getElementById("theme-switch");
+
+  themeBtn.addEventListener("click", function () {
+    themeIndex = (themeIndex + 1) % THEMES.length;
+    document.documentElement.setAttribute("data-theme", THEMES[themeIndex]);
+    renderAll();
+  });
+
+  document.documentElement.setAttribute("data-theme", THEMES[themeIndex]);
+  renderSiteCards();
+  renderParamControls();
+  renderAssumptions();
+  renderAll();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
