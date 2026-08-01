@@ -125,6 +125,19 @@ leaves the machine and nothing is sent over the network.
   device and persists across reloads, but is not shared between devices or
   browsers and can be cleared by the user's own browser data settings.
 
+## Logo and favicon
+
+`assets/img/logo.png` is the source mark (a double-S symbol) and is used two
+ways:
+
+- As the browser tab favicon, linked directly with
+  `<link rel="icon" type="image/png" href="assets/img/logo.png">`.
+- As the header logo, next to the dashboard title.
+
+It is a fixed-color raster asset, so unlike the rest of the interface it does
+not recolor when the hidden theme switcher is used; only the accent color of
+the chart, controls, and highlights changes with the theme.
+
 ## Color themes
 
 The dashboard ships three light color themes (default blue, an earth
@@ -142,8 +155,9 @@ design rather than presented as a primary control.
 ## File structure
 
 ```text
-index.html   the entire dashboard: markup, styles, and simulation/chart logic
-README.md    this file
+index.html         the entire dashboard: markup, styles, and simulation/chart logic
+assets/img/logo.png  logo mark, used as the header logo and the favicon
+README.md          this file
 ```
 
 ## Accessibility notes

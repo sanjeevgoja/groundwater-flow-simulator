@@ -1,0 +1,471 @@
+/* Alberta Soil Behaviour Modelling — shared stylesheet
+   Chrome tokens follow the dataviz reference palette (references/palette.md)
+   so page surfaces and chart surfaces always agree. */
+
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-raised: #ffffff;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #6b4226;
+  --accent-strong: #4a2c17;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 8px 24px rgba(11, 11, 11, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-raised: #201f1d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #c9a06a;
+    --accent-strong: #e8c493;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-raised: #201f1d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #c9a06a;
+  --accent-strong: #e8c493;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+a { color: inherit; }
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* --- Site header / nav --- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+.brand .brand-mark {
+  height: 30px;
+  width: 30px;
+  object-fit: contain;
+  display: block;
+}
+
+nav.site-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+nav.site-nav a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+nav.site-nav a:hover { background: var(--grid); color: var(--text-primary); }
+nav.site-nav a.active { background: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) nav.site-nav a.active { color: #1a1208; }
+}
+:root[data-theme="dark"] nav.site-nav a.active { color: #1a1208; }
+
+#theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+#theme-toggle:hover { background: var(--grid); }
+
+/* --- Hero --- */
+
+.hero {
+  padding: 56px 0 36px;
+  text-align: center;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+.hero p {
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+.hero .eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+/* --- Soil selector cards --- */
+
+.selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 20px;
+  padding: 8px 0 64px;
+}
+
+.soil-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 20px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+.soil-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: var(--card-accent, var(--accent));
+}
+.soil-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(11,11,11,0.08), 0 16px 32px rgba(11,11,11,0.12);
+}
+
+.soil-card .icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  background: color-mix(in srgb, var(--card-accent, var(--accent)) 16%, var(--surface));
+}
+
+.soil-card h3 {
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+}
+.soil-card .region {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.soil-card .tagline {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  flex-grow: 1;
+}
+.soil-card .order-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--card-accent, var(--accent));
+  background: color-mix(in srgb, var(--card-accent, var(--accent)) 14%, transparent);
+  width: fit-content;
+}
+
+.explore-btn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  background: var(--card-accent, var(--accent));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.explore-btn:hover { filter: brightness(1.08); }
+
+/* --- Sections / cards used across dashboard & other pages --- */
+
+section.block {
+  padding: 28px 0;
+}
+section.block h2 {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+section.block .section-lead {
+  color: var(--text-secondary);
+  margin-top: 0;
+  max-width: 760px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.property-card h3 {
+  margin: 0 0 2px;
+  font-size: 1.02rem;
+}
+.property-card .chart-wrap {
+  height: 90px;
+  margin: 10px 0 6px;
+}
+.property-card p {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+.badge .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+}
+
+.impact-card h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+.impact-card p { color: var(--text-secondary); font-size: 0.92rem; margin: 0; }
+
+details.data-table {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+}
+details.data-table summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+table.plain {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 0.88rem;
+}
+table.plain th, table.plain td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--grid);
+}
+table.plain th { color: var(--muted); font-weight: 700; }
+table.plain td.num { font-variant-numeric: tabular-nums; }
+
+/* --- Dashboard header --- */
+
+.soil-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 32px 0 8px;
+}
+.soil-hero .icon-badge-lg {
+  width: 76px; height: 76px;
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem;
+  background: color-mix(in srgb, var(--soil-accent, var(--accent)) 16%, var(--surface));
+  flex-shrink: 0;
+}
+.soil-hero-text h1 { margin: 0 0 4px; font-size: 1.8rem; }
+.soil-hero-text .region { color: var(--muted); font-weight: 600; font-size: 0.92rem; }
+.soil-hero-text .desc { color: var(--text-secondary); max-width: 720px; margin-top: 10px; }
+.meta-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.meta-chip {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--grid);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.soil-picker-inline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+}
+.soil-picker-inline a {
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.soil-picker-inline a.current {
+  background: var(--soil-accent, var(--accent));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* --- Compare page --- */
+
+.compare-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 6px 0 20px;
+}
+.compare-controls label { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); }
+.compare-controls select {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+.compare-chart-wrap { height: 340px; }
+
+.legend-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+.legend-strip .legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.82rem; color: var(--text-secondary);
+}
+.legend-strip .swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+/* --- Footer --- */
+
+footer.site-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+  padding: 26px 0 46px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+footer.site-footer a { color: var(--text-secondary); font-weight: 600; text-decoration: none; }
+footer.site-footer a:hover { text-decoration: underline; }
+
+/* --- Methodology page --- */
+
+.prose h2 { font-size: 1.25rem; margin-top: 32px; }
+.prose p, .prose li { color: var(--text-secondary); }
+.prose ul { padding-left: 20px; }
+
+@media (max-width: 640px) {
+  .site-header .container { flex-wrap: wrap; }
+  nav.site-nav { order: 3; width: 100%; justify-content: flex-start; }
+}

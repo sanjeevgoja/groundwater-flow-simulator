@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alberta Groundwater Flow Simulator</title>
+<link rel="icon" type="image/png" href="assets/img/logo.png">
 <style>
   :root[data-theme="default"] {
     --surface-1:      #fcfcfb;
@@ -72,6 +73,21 @@
 
   header.page-header {
     margin-bottom: 28px;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .brand-mark {
+    height: 40px;
+    width: auto;
+    flex-shrink: 0;
+    display: block;
+    object-fit: contain;
   }
 
   header.page-header h1 {
@@ -623,7 +639,10 @@
 <div class="wrap">
 
   <header class="page-header">
-    <h1>Alberta Groundwater Flow Simulator</h1>
+    <div class="brand-row">
+      <img class="brand-mark" src="assets/img/logo.png" alt="Groundwater Flow Simulator logo">
+      <h1>Alberta Groundwater Flow Simulator</h1>
+    </div>
     <p>Pick a site setting and a simulation window to see how the depth to the water table is expected to move, and whether that movement crosses a saturation threshold associated with slope or excavation instability.</p>
   </header>
 
