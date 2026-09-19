@@ -5,7 +5,8 @@ Alberta site is expected to move over a chosen time window, and whether that
 movement crosses a threshold associated with saturation risk.
 
 Open `index.html` directly in a browser. There is no build step and no
-external dependency.
+network dependency: the only third-party code, Three.js, is vendored locally
+in `assets/js/vendor/`, not loaded from a CDN.
 
 ## What it does
 
@@ -24,7 +25,14 @@ external dependency.
    risk status.
 6. A table view of the underlying daily values is available behind the
    "View underlying data as a table" toggle beneath the chart.
-7. "Save this run" records the current site, parameters, and results to a run
+7. A 3D aquifer cross-section (drag to rotate) shows the ground surface, a
+   plane at the current water table depth, a dashed outline at the
+   saturation threshold, and drifting points that show whether the aquifer
+   is recharging (rising toward the surface) or discharging (falling away
+   from it). Each site card also carries a small illustrative 3D diorama.
+   These are supplementary: the same numbers are always also in the chart,
+   stat tiles, and table.
+8. "Save this run" records the current site, parameters, and results to a run
    history kept in the browser's local storage, viewable and exportable in
    the "Run history" section.
 
@@ -152,12 +160,35 @@ right corner of the page. It is reachable by keyboard (tab to it, Enter or
 Space to activate) and has an `aria-label`, but is visually understated by
 design rather than presented as a primary control.
 
+## 3D components
+
+Three.js draws three kinds of view, all built with plain geometry (boxes,
+planes, points), no external models or textures:
+
+- A small decorative diorama on each site card, auto-rotating.
+- A faint animated wireframe field behind the page header, purely decorative.
+- The aquifer cross-section: a soil block from the ground surface down to 10
+  metres, with a plane at the current end-of-window water table depth, a
+  dashed outline at the saturation threshold, and drifting points colored to
+  show recharge or discharge direction. It is the only 3D view tied to real
+  simulation numbers, and it updates whenever the site, window, or any
+  parameter changes.
+
+Every 3D canvas is marked `aria-hidden`, since the numbers it represents are
+always also shown as text, in the chart, or in a table. Continuous animation
+(the wave ripple, diorama rotation, particle drift) is skipped when the
+browser reports `prefers-reduced-motion`; the cross-section still updates
+instantly when data changes. If WebGL is unavailable, the 3D canvases hide
+themselves and the rest of the dashboard keeps working.
+
 ## File structure
 
 ```text
-index.html         the entire dashboard: markup, styles, and simulation/chart logic
-assets/img/logo.png  logo mark, used as the header logo and the favicon
-README.md          this file
+index.html                          the entire dashboard: markup, styles, simulation/chart logic, and Three.js scenes
+assets/img/logo.png                 logo mark, used as the header logo and the favicon
+assets/js/vendor/three.min.js       vendored Three.js r149, loaded locally, never from a CDN
+assets/js/vendor/three.LICENSE.txt  Three.js MIT license text
+README.md                           this file
 ```
 
 ## Accessibility notes

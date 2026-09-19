@@ -13,14 +13,21 @@ seepage depending on site type).
 ## Requirements
 
 ### Runtime constraints
-- No build step, no bundler, no package manager, no external CDN or network
-  dependency. `index.html` must open directly in a browser and work fully
-  offline.
-- Everything (markup, CSS, and simulation/chart logic) lives inline in
-  `index.html`. Do not split it into separate CSS/JS files unless the user
-  explicitly asks for that restructuring.
-- Only asset on disk that `index.html` actually references is
-  `assets/img/logo.png` (used as both the favicon and header logo).
+- No build step, no bundler, no package manager, no CDN, and no runtime
+  network dependency. `index.html` must open directly in a browser and work
+  fully offline. Three.js is vendored locally at
+  `assets/js/vendor/three.min.js` (pinned to r149, downloaded once, never
+  loaded from a CDN) so this holds even though the project now depends on a
+  third-party library.
+- All of this project's own logic (markup, CSS, simulation model, chart, run
+  history, and the Three.js scenes) lives inline in `index.html`. Only
+  third-party or binary assets get their own file
+  (`assets/img/logo.png`, `assets/js/vendor/three.min.js`). Do not split the
+  project's own logic into separate files unless the user explicitly asks
+  for that restructuring.
+- Files on disk that `index.html` actually references: `assets/img/logo.png`
+  (favicon and header logo) and `assets/js/vendor/three.min.js` (3D
+  components below). Keep `assets/js/vendor/three.LICENSE.txt` alongside it.
 
 ### Functional requirements
 1. Three selectable site presets: irrigated farmland, river floodplain, urban
@@ -51,6 +58,29 @@ seepage depending on site type).
    near-invisible button fixed to the bottom-right corner; this is a
    deliberate design choice documented in the README, not a bug, don't make
    it more prominent without being asked.
+
+### 3D components (Three.js)
+- Three decorative site dioramas, one per site card, built once when the
+  cards are first rendered and never rebuilt on click (rebuilding on every
+  click would leak a WebGL context each time). Selecting a different site
+  updates only the card's `aria-pressed` state, see `setActiveSiteCard`.
+- One faint animated wireframe field behind the page header, purely
+  decorative.
+- One data-tied 3D aquifer cross-section, updated from `renderAll()` on
+  every parameter, site, or window change: the water table plane tracks the
+  end-of-window depth, the dashed outline tracks the saturation threshold,
+  and drifting particles show recharge (rising) or discharge (falling)
+  direction from the sign of `h0 - hEq`.
+- All 3D canvases are `aria-hidden="true"`. The same numbers they represent
+  must always also be readable as text or in the existing chart/table, never
+  only in the 3D view.
+- Respect `prefers-reduced-motion`: continuous animation (wave ripple,
+  diorama rotation, particle drift) is disabled when it is set; the cross
+  section still updates instantly (not continuously) when data changes.
+- Wrap `THREE.WebGLRenderer` creation in `try/catch` and hide the canvas
+  (plus show the `.xsection-fallback` text for the cross section) if it
+  throws, so an old or headless browser without WebGL still gets a working
+  2D dashboard.
 
 ### Accessibility requirements
 - Site cards are real `<button>` elements with `aria-pressed`.
@@ -83,9 +113,10 @@ seepage depending on site type).
 
 ## Known repo oddity
 
-`assets/css/style.css` and every file under `assets/js/` (charts.js,
-compare.js, dashboard.js, main.js, soil-data.js, theme.js) are **not
-referenced anywhere in `index.html`** and are not part of this project. Their
+`assets/css/style.css` and every file directly under `assets/js/` (charts.js,
+compare.js, dashboard.js, main.js, soil-data.js, theme.js, everything except
+the `assets/js/vendor/` folder) are **not referenced anywhere in
+`index.html`** and are not part of this project. Their
 content (soil composition, cohesion, friction angle, plasticity index) is
 from an unrelated "Alberta Soil Behaviour Modelling" tool, apparently left
 over from a different project sharing this repo at some point. Don't assume
@@ -95,10 +126,12 @@ simulator; confirm with the user before deleting or repurposing them.
 ## File structure
 
 ```text
-index.html          the entire dashboard: markup, styles, and simulation/chart logic
-assets/img/logo.png  logo mark, used as the header logo and the favicon
-robots.txt           allows all crawlers
-README.md            user-facing documentation of the model and features
-CLAUDE.md            this file
-assets/css, assets/js  orphaned files unrelated to this project, see above
+index.html                      the entire dashboard: markup, styles, simulation/chart logic, and Three.js scenes
+assets/img/logo.png             logo mark, used as the header logo and the favicon
+assets/js/vendor/three.min.js   vendored Three.js r149 (UMD build), loaded locally, never from a CDN
+assets/js/vendor/three.LICENSE.txt  Three.js MIT license text
+robots.txt                      allows all crawlers
+README.md                       user-facing documentation of the model and features
+CLAUDE.md                       this file
+assets/css, assets/js (excluding vendor/)  orphaned files unrelated to this project, see above
 ```
